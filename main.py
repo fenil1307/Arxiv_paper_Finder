@@ -1,6 +1,84 @@
-def main():
-    print("Hello from arxiv-paper-finder!")
+from autogen import AssistantAgent
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from autogen_agentchat.teams import RoundRobinGroupChat
+import os
+import asyncio
+import arxiv
+from typing import List,Dict,AsyncGenerator
+from dotenv import load_dotenv
+load_dotenv()
+
+openai_brain = OpenAIChatCompletionClient(
+    base_url="https://openrouter.ai/api/v1",  
+    api_key=os.getenv("OPENROUTER_API_KEY"),
+    model="mistralai/mistral-small-3.2-24b-instruct:free"
+)
+
+def arxiv_search(query: str, max_results: int = 5) -> List [Dict] :
+  """Return a compact list of arXiv papers matching *query*.
+ 
+  Each element contains: ``title``, ``authors``, ``published``, ``summary`` and
+  ``pdf_url``, The helper is wrapped as an AutoGen *FunctionTool* below so it
+  can be invoked by agents through the normal tool-use mechanism.  """
+  client = arxiv.Client()
+  search = arxiv.Search(
+        query=query,
+        max_results=max_results,
+        sort_by=arxiv.SortCriterion.Relevance,
+        )
+  papers: List[Dict] = []
+  for result in client. results (search):
+    papers.append(
+            { 
+      "title": result.title,
+      "authors": [a.name for a in result.authors],
+      "published": result.published.strftime("%Y-%m-%d"),
+      "summary": result.summary,
+      "pdf_url": result.pdf_url,
+    }
+   )
+    return papers
 
 
-if __name__ == "__main__":
-    main()
+arxiv_researcher_agent = AssistantAgent(
+     name='arxiv_search_agent',
+     description='Create arXiv queries and retrieves candidates papers',
+     model_client=openai_brain,
+     tools=[arxiv_search],
+     system_message=(      
+         "Given a user topic, think of the best arXiv query and call the "
+         "provided tool. Always fetch five-times the papers requested so "
+         "that you can down-select the most relevant ones. When the tool "
+         "returns, choose exactly the number of papers requested and pass "
+         "them as concise JSON to the summarize."
+      )
+)
+    
+
+summarizer_agent = AssistantAgent(
+    name='summarizer_agent',
+    description='An agent which summarizes the result',
+    model_client=openai_brain,
+    system_message=(
+        "You are an expert researcher. When you receive the JSON list of papers, "
+        "write a literature review-style report in Markdown:\n" \
+        "1. Start with a 2-3 sentence introduction of the topic.\n" \
+        "2. Then include one bullet per paper with: title (as a Markdown link), authors, "
+        "the specific problem tackled, and its key contribution.\n"
+        "3. Close with a single-sentence takeaway."
+    )
+)
+
+team=RoundRobinGroupChat(
+    participants=[arxiv_researcher_agent,summarizer_agent],
+    max_turns=2
+)
+
+async def run_team():
+    task = 'Condict a literature review on the topic - Autogen and return exactly 5 papers.'
+    async for msg in team.run_stream(task=task) :
+      print (msg)
+      
+      
+if (__name__=='__main_'):
+    asyncio.run(run_team ())

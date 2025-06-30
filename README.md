@@ -9,16 +9,16 @@
 - 🔎 **Keyword-based Search** across arXiv categories
 - 🎯 **Filter by Category**, Date, Relevance, or Author
 - 📄 **View Abstracts** and Metadata with clean formatting
-- 💡 **AI-Powered Summarization** *(optional)* to understand papers faster
+- 💡 **AI-Powered Summarization** to understand papers faster
 - 📥 **Download PDFs** directly from arXiv
-- 🧠 Optionally integrate with LLMs to generate summaries or Q&A from papers
+
 
 ---
 
 ## 🛠️ Tech Stack
 
 - **Python** 🐍
-- `arxiv` Python API for fetching paper metadata
+- `arxiv` Python version for fetching paper metadata
 - **Streamlit** or **Flask** (for web UI)
 - **OpenAI / Gemini / Local LLMs** (for summarization, optional)
 - `requests`, `beautifulsoup4` for scraping (if used)
@@ -29,5 +29,5 @@
 
 1. **Clone the repository**
 ```bash
-git clone https://github.com/fenil1307/ar.git
+git clone https://github.com/fenil1307/Arxiv_paper_Finder.git
 cd arxplore

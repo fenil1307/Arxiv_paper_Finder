@@ -8,11 +8,7 @@ from typing import List,Dict,AsyncGenerator
 from dotenv import load_dotenv
 load_dotenv()
 
-openai_brain = OpenAIChatCompletionClient(
-    base_url="https://openrouter.ai/api/v1",  
-    api_key=os.getenv("OPENROUTER_API_KEY"),
-    model="mistralai/mistral-small-3.2-24b-instruct:free"
-)
+openai_brain = OpenAIChatCompletionClient(model='gpt-4o',api_key=os.getenv('OPENAI_API_KEY'))
 
 def arxiv_search(query: str, max_results: int = 5) -> List [Dict] :
   """Return a compact list of arXiv papers matching *query*.

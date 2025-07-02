@@ -4,3 +4,4 @@ autogen-ext
 streamlit
 tiktoken
 arxiv
+openai

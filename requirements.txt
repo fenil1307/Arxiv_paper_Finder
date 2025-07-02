@@ -8,3 +8,4 @@ openai
 dotenv
 asyncio
 typing
+nest-asyncio

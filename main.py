@@ -2,14 +2,18 @@ from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.teams import RoundRobinGroupChat
 import os
-import asyncio
 import arxiv
 from typing import List, Dict
 from dotenv import load_dotenv
 
 load_dotenv()
 
-openai_brain = OpenAIChatCompletionClient(model='gpt-4o', api_key=os.getenv('OPENAI_API_KEY'))
+
+openai_brain = OpenAIChatCompletionClient(
+    model='gpt-4o',
+    api_key=os.getenv('OPENAI_API_KEY')
+)
+
 
 def arxiv_search(query: str, max_results: int) -> List[Dict]:
     """Return a compact list of arXiv papers matching query."""
@@ -21,16 +25,15 @@ def arxiv_search(query: str, max_results: int) -> List[Dict]:
     )
     papers: List[Dict] = []
     for result in client.results(search):
-        papers.append(
-            {
-                "title": result.title,
-                "authors": [a.name for a in result.authors],
-                "published": result.published.strftime("%Y-%m-%d"),
-                "summary": result.summary,
-                "pdf_url": result.pdf_url,
-            }
-        )
+        papers.append({
+            "title": result.title,
+            "authors": [a.name for a in result.authors],
+            "published": result.published.strftime("%Y-%m-%d"),
+            "summary": result.summary,
+            "pdf_url": result.pdf_url,
+        })
     return papers
+
 
 arxiv_researcher_agent = AssistantAgent(
     name='arxiv_search_agent',
@@ -43,6 +46,7 @@ arxiv_researcher_agent = AssistantAgent(
         "Return exactly the number of papers requested in concise JSON format."
     )
 )
+
 
 summarizer_agent = AssistantAgent(
     name='summarizer_agent',
@@ -57,16 +61,9 @@ summarizer_agent = AssistantAgent(
     )
 )
 
-team = RoundRobinGroupChat(
-    participants=[arxiv_researcher_agent, summarizer_agent],
-    max_turns=2
-)
 
-async def run_team():
-    task = "Conduct a literature review on the topic 'Autogen' and return exactly 5 papers."
-    async for msg in team.run_stream(task=task):
-        print(msg)
-
-
-if __name__ == '__main__':
-    asyncio.run(run_team())
+def build_team() -> RoundRobinGroupChat:
+    return RoundRobinGroupChat(
+        participants=[arxiv_researcher_agent, summarizer_agent],
+        max_turns=2
+    )

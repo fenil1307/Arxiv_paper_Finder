@@ -1,15 +1,18 @@
 import streamlit as st
 import asyncio
-from main import team
+import nest_asyncio
+from main import build_team
 
-st.set_page_config(page_title="Literature Review Assistant", page_icon="📚", layout="centered")
-st.markdown("## 📚 **Literature Review Assistant**")
+nest_asyncio.apply()
+
+st.set_page_config(page_title="ArXplore", page_icon="📚", layout="centered")
+st.markdown("## 📚 **ArXplore: Literature Review Assistant**")
 
 topic = st.text_input("Research topic", placeholder="e.g., Large Language Models")
 num_papers = st.slider("Number of papers", min_value=1, max_value=10, value=5)
 
 async def run_custom_team(topic: str, num_papers: int):
-    """Run the team with custom topic and number of papers"""
+    team = build_team()
     task = f"""Conduct a literature review on the topic '{topic}' and return exactly {num_papers} papers.
 
 For the summarizer: Please format each paper with the following structure:
@@ -19,28 +22,25 @@ For the summarizer: Please format each paper with the following structure:
 - **Key Contribution:** [Main contribution of the paper]
 
 Use bullet points for each paper and make it easily readable."""
-    
-    arxiv_result = None
+
     summary_result = None
-    
+
     async for msg in team.run_stream(task=task):
-       
         if hasattr(msg, 'content') and msg.content:
-            if hasattr(msg, 'source') and msg.source == 'arxiv_search_agent':
-                arxiv_result = msg.content
-            elif hasattr(msg, 'source') and msg.source == 'summarizer_agent':
+            if hasattr(msg, 'source') and msg.source == 'summarizer_agent':
                 summary_result = msg.content
-    
+
     return summary_result
 
 if st.button("Search"):
     if not topic.strip():
-        st.warning("⚠️ Please enter a research topic.")
+        st.warning("Please enter a research topic.")
     else:
         with st.spinner(" Fetching and summarizing papers..."):
             try:
-                summary_result = asyncio.run(run_custom_team(topic, num_papers))
-                
+                loop = asyncio.get_event_loop()
+                summary_result = loop.run_until_complete(run_custom_team(topic, num_papers))
+
                 if summary_result:
                     st.markdown("###  **Literature Review Summary:**")
                     st.markdown(f"""
@@ -50,7 +50,6 @@ if st.button("Search"):
                     """, unsafe_allow_html=True)
                 else:
                     st.warning("No summary generated. Please try again.")
-                    
             except Exception as e:
                 st.error(f" Error: {str(e)}")
-                st.info("Please check your OpenAI API key and internet connection.")
+                st.info("Check your OpenAI API key and internet connection.")

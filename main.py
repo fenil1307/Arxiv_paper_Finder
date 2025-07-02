@@ -1,5 +1,3 @@
-# main.py
-
 from autogen_agentchat.agents import AssistantAgent
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 from autogen_agentchat.teams import RoundRobinGroupChat
@@ -13,7 +11,7 @@ load_dotenv()
 
 openai_brain = OpenAIChatCompletionClient(model='gpt-4o', api_key=os.getenv('OPENAI_API_KEY'))
 
-def arxiv_search(query: str, max_results: int = 5) -> List[Dict]:
+def arxiv_search(query: str, max_results: int) -> List[Dict]:
     """Return a compact list of arXiv papers matching query."""
     client = arxiv.Client()
     search = arxiv.Search(
@@ -64,13 +62,11 @@ team = RoundRobinGroupChat(
     max_turns=2
 )
 
-async def run_review(topic: str, paper_count: int) -> str:
-    task = f"Conduct a literature review on the topic - {topic} and return exactly {paper_count} papers."
-    final_output = ""
-    async for step in team.run_stream(task=task):
-       
-        if hasattr(step, "message") and hasattr(step.message, "content"):
-            final_output += f"{step.message.content}\n\n"
-        elif hasattr(step, "content"):  
-            final_output += f"{step.content}\n\n"
-    return final_output
+async def run_team():
+    task = "Conduct a literature review on the topic 'Autogen' and return exactly 5 papers."
+    async for msg in team.run_stream(task=task):
+        print(msg)
+
+
+if __name__ == '__main__':
+    asyncio.run(run_team())

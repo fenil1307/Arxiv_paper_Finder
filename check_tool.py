@@ -31,6 +31,6 @@ def arxiv_search(query: str, max_results: int = 5) -> List [Dict] :
       "pdf_url": result.pdf_url,
     }
    )
-    return papers
+  return papers
 
-print(json.dumps(arxiv_search(query="Agents"), indent=2))
+print((arxiv_search(query="Agents"), indent=2))

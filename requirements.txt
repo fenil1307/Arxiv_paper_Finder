@@ -5,3 +5,6 @@ streamlit
 tiktoken
 arxiv
 openai
+dotenv
+asyncio
+typing
